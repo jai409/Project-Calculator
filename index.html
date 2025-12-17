@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculator+</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #f0f2f5;
+    }
+
+    .calculator {
+      width: 320px;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .display {
+      height: 64px;
+      background: #111;
+      color: #0f0;
+      font-size: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 0 12px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    button {
+      flex: 1 0 21%;
+      height: 56px;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .operator { background: #ffd166; }
+    .operator.active { outline: 3px solid #333; }
+    .equals { background: #06d6a0; flex-basis: 48%; }
+    .clear { background: #ef476f; flex-basis: 48%; }
+    .backspace { background: #adb5bd; }
+  </style>
+</head>
+<body>
+  <div class="calculator">
+    <div id="display" class="display">0</div>
+    <div class="buttons">
+      <button class="clear">C</button>
+      <button class="backspace">⌫</button>
+      <button class="operator">/</button>
+      <button class="operator">*</button>
+
+      <button>7</button><button>8</button><button>9</button>
+      <button class="operator">-</button>
+
+      <button>4</button><button>5</button><button>6</button>
+      <button class="operator">+</button>
+
+      <button>1</button><button>2</button><button>3</button>
+      <button class="equals">=</button>
+
+      <button style="flex-basis:48%">0</button>
+      <button>.</button>
+    </div>
+  </div>
+
+  <script>
+    const display = document.getElementById('display');
+    const buttons = document.querySelectorAll('button');
+    const operators = document.querySelectorAll('.operator');
+
+    let firstNumber = null;
+    let operator = null;
+    let shouldResetDisplay = false;
+
+    const add = (a, b) => a + b;
+    const subtract = (a, b) => a - b;
+    const multiply = (a, b) => a * b;
+    const divide = (a, b) => b === 0 ? 'Nope 🙃' : a / b;
+
+    function operate(op, a, b) {
+      a = Number(a); b = Number(b);
+      switch (op) {
+        case '+': return add(a, b);
+        case '-': return subtract(a, b);
+        case '*': return multiply(a, b);
+        case '/': return divide(a, b);
+      }
+    }
+
+    function updateDisplay(value) {
+      display.textContent = value.toString().slice(0, 10);
+    }
+
+    function clearActiveOperators() {
+      operators.forEach(op => op.classList.remove('active'));
+    }
+
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => handleInput(btn.textContent, btn));
+    });
+
+    function handleInput(input, btn) {
+      if (!isNaN(input)) {
+        if (display.textContent === '0' || shouldResetDisplay) {
+          updateDisplay(input);
+          shouldResetDisplay = false;
+        } else updateDisplay(display.textContent + input);
+        return;
+      }
+
+      if (input === '.') {
+        if (!display.textContent.includes('.')) updateDisplay(display.textContent + '.');
+        return;
+      }
+
+      if (input === 'C') {
+        firstNumber = operator = null;
+        updateDisplay(0);
+        clearActiveOperators();
+        return;
+      }
+
+      if (input === '⌫') {
+        updateDisplay(display.textContent.slice(0, -1) || 0);
+        return;
+      }
+
+      if (['+', '-', '*', '/'].includes(input)) {
+        clearActiveOperators();
+        btn.classList.add('active');
+
+        if (operator && !shouldResetDisplay) {
+          const result = operate(operator, firstNumber, display.textContent);
+          updateDisplay(result);
+          firstNumber = result;
+        } else firstNumber = display.textContent;
+
+        operator = input;
+        shouldResetDisplay = true;
+        return;
+      }
+
+      if (input === '=') {
+        if (!operator) return;
+        const result = operate(operator, firstNumber, display.textContent);
+        updateDisplay(result);
+        firstNumber = result;
+        operator = null;
+        shouldResetDisplay = true;
+        clearActiveOperators();
+      }
+    }
+
+    window.addEventListener('keydown', e => {
+      if ((e.key >= '0' && e.key <= '9') || ['+', '-', '*', '/', '.', '='].includes(e.key)) {
+        handleInput(e.key);
+      }
+      if (e.key === 'Enter') handleInput('=');
+      if (e.key === 'Backspace') handleInput('⌫');
+    });
+  </script>
+</body>
+</html>
